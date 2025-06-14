@@ -9,7 +9,7 @@ import os # Import os for environment variables
 import re # Import re for parsing (already used in agents, keep it)
 
 # Import the model router and new workflow engine
-from model_router import get_model_details_for_agent, get_model_details_for_agent, list_agent_model_assignments
+from model_router import get_model_details_for_agent
 
 import sys # Keep sys import if not already there, for sys.exit
 from workflow_engine import WorkflowEngine # Import the new engine
