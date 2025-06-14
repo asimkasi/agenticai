@@ -3,6 +3,7 @@ from streamlit_agraph import agraph, Node, Edge, Config
 import sys
 import os
 import re
+import datetime
 
 # --- Path Setup ---
 # Assumes all necessary files (ai_app_builder_workflow.py, workflow_engine.py, model_router.py, workflow_config.json)
@@ -10,7 +11,7 @@ import re
 try:
     # Adjust path if run_gui.py is in a subdirectory like 'gui/'
     # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-    from ai_app_builder_workflow11 import GrandOrchestrator
+    from ai_app_builder_workflow import GrandOrchestrator
     # workflow_engine and model_router are imported *by* GrandOrchestrator now
 except ImportError as e:
     st.error(f"Could not import GrandOrchestrator. Ensure workflow files are accessible. Error: {e}")
@@ -237,18 +238,31 @@ def build_and_display_graph(orchestrator):
                    break # Highlight only the first matching edge
 
 
-    config = Config(width=700, height=500, directed=True, physics=True, hierarchical=False, # Enable physics for better layout
-                    # Add some physics configuration
-                    physics={"enabled": True, "barnesHut": {"gravitationalConstant": -2000, "centralGravity": 0.3, "springLength": 95, "springConstant": 0.04, "damping": 0.09, "avoidOverlap": 0.5}},
+    config = Config(
+        width=700,
+        height=500,
+        directed=True,
+        hierarchical=False,  # Enable physics for better layout
+        physics={
+            "enabled": True,
+            "barnesHut": {
+                "gravitationalConstant": -2000,
+                "centralGravity": 0.3,
+                "springLength": 95,
+                "springConstant": 0.04,
+                "damping": 0.09,
+                "avoidOverlap": 0.5,
+            },
+        },
                     edges={"color": {"inherit": "from"}, "smooth": True},
                     nodes={"font": {"size": 12}},
                     #cluster={"enabled": True, "titleTemplate": "Cluster of {clusterTitle}"} # Optional: Cluster nodes if desired
-                    )
+    )
     
-    # Add a dummy key that changes with simulation step to force re-render of graph config
-    graph_key = f"agraph_{st.session_state.get('simulation_steps', 0)}"
-
-    agraph(nodes=nodes, edges=edges, config=config, key=graph_key)
+    # Render the graph representing the current workflow state
+    # streamlit-agraph does not expose a `key` argument, so we simply
+    # call the component each time the layout updates.
+    agraph(nodes=nodes, edges=edges, config=config)
 
 # --- Main Application Layout ---
 
