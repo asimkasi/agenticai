@@ -1,0 +1,20 @@
+{
+  "provider": "openrouter",
+  "overrides": {
+    "Dream Weaver": {
+      "provider": "openrouter",
+      "model": "deepseek-ai/deepseek-v3-8b",
+      "temperature": 0.7
+    },
+    "Code Sage": {
+      "provider": "lm_studio",
+      "model": "mistralai/mistral-7b-instruct",
+      "port": 1234,
+      "host": "localhost"
+    },
+    "default": {
+      "provider": "openrouter",
+      "model": "deepseek-ai/deepseek-v3-8b"
+    }
+  }
+}

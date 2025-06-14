@@ -1,0 +1,786 @@
+{
+  "description": "Workflow definition for the AI App Builder.",
+  "events": {
+    "start": [
+      {
+        "description": "Initial event when project starts.",
+        "conditions": {},
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "current_phase",
+            "value": "Idea Inception & Validation"
+          },
+           {
+            "type": "update_state",
+            "path": "status",
+            "value": "Active"
+           },
+          {
+            "type": "delegate_task",
+            "agent": "Dream Weaver",
+            "task": "generate_concept",
+            "content": {
+              "user_idea": "{{event.user_idea}}"
+            },
+            "context_id": "concept_gen_001"
+          }
+        ]
+      }
+    ],
+    "agent_result": [
+      {
+        "description": "Dream Weaver completed concept generation.",
+        "conditions": {
+          "event_data": {
+            "sender": "Dream Weaver",
+            "content.task_name": "generate_concept",
+            "content.status": "completed"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "concept_brief",
+            "value": "{{event.content.concept_brief}}"
+          },
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "Concept Generated"
+          },
+          {
+            "type": "send_human_message",
+            "message_type": "QUESTION",
+            "content": "The Dream Weaver has crafted an initial concept for your app: '{{state.concept_brief.purpose}}'. Features include: {{state.concept_brief.features | join(', ')}}. Are you happy with this direction?",
+            "options": ["Approve", "Refine Idea"],
+            "context_id": "{{event.context_id}}"
+          }
+        ]
+      },
+      {
+        "description": "Master Builder completed architecture design.",
+        "conditions": {
+          "event_data": {
+            "sender": "Master Builder",
+            "content.task_name": "design_architecture",
+            "content.status": "completed"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "technical_blueprint",
+            "value": "{{event.content.technical_blueprint}}"
+          },
+           {
+            "type": "update_state",
+            "path": "tech_stack_proposal",
+            "value": "{{event.content.tech_stack_proposal}}"
+           },
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "Architecture Designed"
+          },
+          {
+            "type": "send_human_message",
+            "message_type": "QUESTION",
+            "content": "The Master Builder has finished the technical blueprint. It proposes a {{state.technical_blueprint.architecture_type}} architecture using {{state.tech_stack_proposal.backend.framework}} ({{state.tech_stack_proposal.backend.language}}) / {{state.tech_stack_proposal.frontend.framework}} ({{state.tech_stack_proposal.frontend.language}}). Does this sound right to you?",
+            "options": ["Approve", "Explain More"],
+            "context_id": "{{event.context_id}}"
+          }
+        ]
+      },
+      {
+        "description": "Aesthetic Artist completed initial UI/UX design.",
+        "conditions": {
+          "event_data": {
+            "sender": "Aesthetic Artist",
+            "content.task_name": "design_ui_ux",
+            "content.status": "completed"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "ui_ux_prototype_url",
+            "value": "{{event.content.ui_ux_prototype_url}}"
+          },
+          {
+            "type": "update_state",
+            "path": "design_guidelines",
+            "value": "{{event.content.design_guidelines}}"
+          },
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "UI/UX Designed"
+          },
+          {
+            "type": "send_human_message",
+            "message_type": "QUESTION",
+            "content": "The Aesthetic Artist has designed the app's look and feel. Please review the prototype here: {{state.ui_ux_prototype_url}}. Do you like this design?",
+            "options": ["Approve", "Suggest Changes"],
+             "context_id": "{{event.context_id}}"
+          }
+        ]
+      },
+      {
+        "description": "Aesthetic Artist completed UI change request.",
+        "conditions": {
+          "event_data": {
+            "sender": "Aesthetic Artist",
+            "content.task_name": "change_ui",
+            "content.status": "completed"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "ui_ux_prototype_url",
+            "value": "{{event.content.ui_ux_prototype_url}}"
+          },
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "UI/UX Refined"
+          },
+           {
+            "type": "send_human_message",
+            "message_type": "PROGRESS",
+            "content": "{{event.content.message}}",
+             "context_id": "{{event.context_id}}"
+           },
+          {
+            "type": "send_human_message",
+            "message_type": "QUESTION",
+            "content": "Please review the updated prototype here: {{state.ui_ux_prototype_url}}. Does this updated design work for you?",
+            "options": ["Approve", "Suggest More Changes"],
+             "context_id": "{{event.context_id}}"
+          }
+        ]
+      },
+      {
+        "description": "Code Sage completed coding a module.",
+        "conditions": {
+          "event_data": {
+            "sender": "Code Sage",
+            "content.task_name": "code_module",
+            "content.status": "ready_for_qa"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "code_modules_status.{{event.content.module_name}}",
+            "value": "ready_for_qa"
+          },
+          {
+             "type": "update_state",
+             "path": "status",
+             "value": "Coding: {{event.content.module_name}} Ready for QA"
+          },
+          {
+            "type": "delegate_task",
+            "agent": "Quality Guardian",
+            "task": "test_module",
+            "content": {
+              "module_name": "{{event.content.module_name}}",
+              "code_ref": "{{event.content.generated_code_summary}}",
+              "test_scope": "integration"
+            },
+             "use_event_context_id": true
+          }
+        ]
+      },
+       {
+        "description": "Code Sage completed fixing a bug.",
+        "conditions": {
+          "event_data": {
+            "sender": "Code Sage",
+            "content.task_name": "fix_bug",
+            "content.status": "ready_for_qa"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "code_modules_status.{{event.content.module_name}}",
+            "value": "ready_for_qa"
+          },
+          {
+             "type": "update_state",
+             "path": "status",
+             "value": "Coding: {{event.content.module_name}} Fix Ready for QA"
+          },
+          {
+            "type": "delegate_task",
+            "agent": "Quality Guardian",
+            "task": "test_module",
+            "content": {
+              "module_name": "{{event.content.module_name}}",
+              "code_ref": "{{event.content.generated_code_summary}}",
+              "test_scope": "integration"
+            },
+             "use_event_context_id": true
+          }
+        ]
+      },
+      {
+        "description": "Quality Guardian passed a module test.",
+        "conditions": {
+          "event_data": {
+            "sender": "Quality Guardian",
+            "content.task_name": "test_module",
+            "content.test_report.status": "passed"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "code_modules_status.{{event.content.module_name}}",
+            "value": "completed"
+          },
+          {
+            "type": "update_state",
+            "path": "test_results.{{event.content.module_name}}",
+            "value": "passed"
+          },
+          {
+             "type": "update_state",
+             "path": "module_test_retries.{{event.content.module_name}}",
+             "value": 0
+          },
+          {
+            "type": "check_condition",
+            "condition_type": "all_modules_completed"
+          },
+          {
+             "type": "update_state",
+             "path": "status",
+             "value": "All Code & QA Completed"
+          },
+           {
+            "type": "update_state",
+            "path": "current_phase",
+            "value": "Final Checks & Launch"
+           },
+          {
+            "type": "send_human_message",
+            "message_type": "QUESTION",
+            "content": "All major code modules are built and tested! Your app is almost ready. Where would you like to launch it?",
+            "options": ["Public App Store", "For Myself (Private)"],
+            "context_id": "deploy_approval"
+          }
+        ]
+      },
+      {
+        "description": "Quality Guardian failed a module test (triggers retry or escalation).",
+        "conditions": {
+          "event_data": {
+            "sender": "Quality Guardian",
+            "content.task_name": "test_module",
+            "content.test_report.status": "failed_with_bugs"
+          }
+        },
+        "actions": [
+           {
+             "type": "delegate_task",
+             "agent": "Code Sage",
+             "task": "fix_bug",
+             "content": {
+               "module_name": "{{event.content.module_name}}",
+               "bug_report": "{{event.content.test_report.bugs_found.0}}",
+               "design_details": "{{state.design_guidelines}}"
+             },
+             "use_event_context_id": true
+           }
+        ]
+      },
+       {
+        "description": "Deployment Master deployment failure (triggers retry or escalation).",
+        "conditions": {
+          "event_data": {
+            "sender": "Deployment Master",
+            "content.task_name": "deploy_app",
+            "content.deployment_status": "failure"
+          }
+        },
+        "actions": [
+            {
+             "type": "delegate_task",
+             "agent": "Deployment Master",
+             "task": "deploy_app",
+             "content": {
+               "app_package_ref": "{{state.current_task_contexts[event.context_id].original_content.app_package_ref}}",
+               "deployment_target": "{{state.current_task_contexts[event.context_id].original_content.deployment_target}}",
+               "environment": "{{state.current_task_contexts[event.context_id].original_content.environment}}"
+             },
+             "use_event_context_id": true
+           }
+        ]
+      },
+      {
+        "description": "Deployment Master deployment success.",
+        "conditions": {
+          "event_data": {
+            "sender": "Deployment Master",
+            "content.task_name": "deploy_app",
+            "content.deployment_status": "success"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "final_app_url",
+            "value": "{{event.content.app_url}}"
+          },
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "App Live!"
+          },
+           {
+            "type": "update_state",
+            "path": "current_phase",
+            "value": "Live & Evolving"
+           },
+           {
+            "type": "update_state",
+            "path": "deployment_retries",
+            "value": 0
+           },
+          {
+            "type": "send_human_message",
+            "message_type": "SUCCESS",
+            "content": "Your app is LIVE! Access it here: {{state.final_app_url}}. The Deployment Master is now monitoring its performance."
+          }
+        ]
+      },
+       {
+        "description": "Generic agent task failed (status_update 'failed'). Catches unhandled agent exceptions.",
+        "conditions": {
+          "event_data": {
+            "type": "status_update",
+            "content.status": "failed"
+          }
+        },
+        "actions": [
+           {
+            "type": "update_state",
+            "path": "status",
+            "value": "Task Failed (Escalated)"
+           },
+            {
+             "type": "send_human_message",
+             "message_type": "CRITICAL_ISSUE",
+             "content": "CRITICAL: An agent reported a task failure. Task '{{event.content.task_name}}' by {{event.sender}} failed with message: {{event.content.message}}. This requires manual review.",
+             "context_id": "escalated_{{event.context_id}}"
+            }
+        ]
+      }
+    ],
+    "human_input": [
+       {
+        "description": "Human approved the concept.",
+        "conditions": {
+          "event_data": {
+            "context_id": "{{state.pending_human_approval_context}}",
+            "response": "approve"
+          },
+           "project_state": {
+             "current_phase": "Idea Inception & Validation",
+             "status": "Concept Generated"
+           }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "current_phase",
+            "value": "Architectural Design"
+          },
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "Concept Approved"
+          },
+          {
+            "type": "delegate_task",
+            "agent": "Master Builder",
+            "task": "design_architecture",
+            "content": {
+              "concept_brief": "{{state.concept_brief}}"
+            },
+            "context_id": "arch_design_001"
+          }
+        ]
+       },
+        {
+        "description": "Human wants to refine the concept.",
+        "conditions": {
+          "event_data": {
+             "context_id": "{{state.pending_human_approval_context}}",
+            "response": "refine idea"
+          },
+           "project_state": {
+             "current_phase": "Idea Inception & Validation",
+             "status": "Concept Generated"
+           }
+        },
+        "actions": [
+            {
+              "type": "update_state",
+              "path": "status",
+              "value": "Awaiting Concept Refinement"
+            },
+            {
+             "type": "send_human_message",
+             "message_type": "INSTRUCTION",
+             "content": "Please tell me what you'd like to refine about the concept.",
+             "context_id": "{{event.context_id}}"
+            }
+        ]
+       },
+        {
+        "description": "Human provides concept refinement input.",
+        "conditions": {
+          "project_state": {
+            "status": "Awaiting Concept Refinement",
+            "pending_human_approval_context": "{{event.context_id}}"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "Refining Concept"
+          },
+          {
+            "type": "delegate_task",
+            "agent": "Dream Weaver",
+            "task": "generate_concept",
+            "content": {
+              "user_idea": "{{state.app_idea}}",
+              "refinement_input": "{{event.response}}"
+            },
+            "context_id": "{{event.context_id}}"
+          }
+        ]
+       },
+       {
+        "description": "Human approved the architecture.",
+        "conditions": {
+          "event_data": {
+            "context_id": "{{state.pending_human_approval_context}}",
+            "response": "approve"
+          },
+           "project_state": {
+             "current_phase": "Architectural Design",
+             "status": "Architecture Designed"
+           }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "current_phase",
+            "value": "User Experience & Interface Design"
+          },
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "Architecture Approved"
+          },
+          {
+            "type": "delegate_task",
+            "agent": "Aesthetic Artist",
+            "task": "design_ui_ux",
+            "content": {
+              "concept_brief": "{{state.concept_brief}}",
+              "technical_blueprint": "{{state.technical_blueprint}}",
+              "user_preferences": {"theme": "clean and modern", "color_scheme": "default"}
+            },
+            "context_id": "ui_design_001"
+          }
+        ]
+       },
+        {
+        "description": "Human wants architecture explanation.",
+        "conditions": {
+          "event_data": {
+             "context_id": "{{state.pending_human_approval_context}}",
+            "response": "explain more"
+          },
+           "project_state": {
+             "current_phase": "Architectural Design",
+             "status": "Architecture Designed"
+           }
+        },
+        "actions": [
+            {
+             "type": "send_human_message",
+             "message_type": "INFO",
+             "content": "The Master Builder can explain: It means we're setting up a robust, future-proof backbone for your app, like building a strong foundation and framing for a house, before we put in the pretty walls.",
+             "context_id": "{{event.context_id}}"
+            }
+        ]
+       },
+       {
+        "description": "Human approved the UI/UX design.",
+        "conditions": {
+          "event_data": {
+            "context_id": "{{state.pending_human_approval_context}}",
+            "response": "approve"
+          },
+           "project_state": {
+             "current_phase": "User Experience & Interface Design",
+             "status": ["UI/UX Designed", "UI/UX Refined"]
+           }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "current_phase",
+            "value": "Iterative Development & Coding"
+          },
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "Design Approved"
+          },
+          {
+            "type": "delegate_task",
+            "agent": "Code Sage",
+            "task": "code_module",
+            "content": {
+              "module_name": "user_authentication",
+              "requirements": "Implement user registration, login, and session management.",
+              "design_details": "{{state.design_guidelines}}"
+            },
+             "context_id": "code_auth_001"
+          },
+          {
+            "type": "update_state",
+            "path": "code_modules_status.user_authentication",
+            "value": "coding"
+          },
+           {
+            "type": "delegate_task",
+            "agent": "Code Sage",
+            "task": "code_module",
+            "content": {
+              "module_name": "main_dashboard",
+              "requirements": "Implement the primary user dashboard view.",
+              "design_details": "{{state.design_guidelines}}"
+            },
+             "context_id": "code_dashboard_001"
+          },
+           {
+            "type": "update_state",
+            "path": "code_modules_status.main_dashboard",
+            "value": "coding"
+           }
+        ]
+       },
+        {
+        "description": "Human wants to suggest changes to UI/UX design.",
+        "conditions": {
+          "event_data": {
+            "context_id": "{{state.pending_human_approval_context}}",
+            "response": ["suggest changes", "suggest more changes"]
+          },
+           "project_state": {
+             "current_phase": "User Experience & Interface Design",
+             "status": ["UI/UX Designed", "UI/UX Refined"]
+           }
+        },
+        "actions": [
+            {
+              "type": "update_state",
+              "path": "status",
+              "value": "Awaiting UI Refinement Input"
+            },
+            {
+             "type": "send_human_message",
+             "message_type": "INSTRUCTION",
+             "content": "What specific changes would you like to suggest for the design? (e.g., 'Make the buttons larger and blue', 'Change layout to be more spacious')",
+             "context_id": "{{event.context_id}}"
+            }
+        ]
+       },
+        {
+        "description": "Human provides UI refinement input.",
+        "conditions": {
+          "project_state": {
+            "status": "Awaiting UI Refinement Input",
+            "pending_human_approval_context": "{{event.context_id}}"
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "Refining UI/UX"
+          },
+          {
+            "type": "delegate_task",
+            "agent": "Aesthetic Artist",
+            "task": "change_ui",
+            "content": {
+              "refinement_input": "{{event.response}}",
+              "concept_brief": "{{state.concept_brief}}"
+            },
+            "context_id": "{{event.context_id}}"
+          }
+        ]
+       },
+       {
+        "description": "Human approves deployment.",
+        "conditions": {
+          "event_data": {
+            "context_id": "deploy_approval",
+            "response": ["public app store", "for myself (private)"]
+          }
+        },
+        "actions": [
+          {
+            "type": "update_state",
+            "path": "selected_deployment_target",
+            "value": "{{ 'cloud' if 'public app store' in event.response else 'local' }}"
+          },
+          {
+            "type": "update_state",
+            "path": "status",
+            "value": "Deployment Approved ({{state.selected_deployment_target}})"
+          },
+          {
+            "type": "delegate_task",
+            "agent": "Deployment Master",
+            "task": "deploy_app",
+            "content": {
+              "app_package_ref": "final_app_build_v1",
+              "deployment_target": "{{state.selected_deployment_target}}",
+              "environment": "{{ 'prod' if state.selected_deployment_target == 'cloud' else 'dev' }}"
+            },
+            "context_id": "app_deploy_001"
+          }
+        ]
+       },
+       {
+         "description": "Human responds to Critical Issue: Review Problem",
+         "conditions": {
+           "event_data": {
+             "context_id": { "starts_with": "escalated_" },
+             "response": "review problem"
+           }
+         },
+         "actions": [
+           {
+             "type": "send_human_message",
+             "message_type": "INFO",
+             "content": "You've chosen to review the problem. Details: {{state.escalated_issues[event.context_id].details}}. What action should I take?",
+             "options": ["Try again", "Ignore and Proceed", "Cancel Project"],
+             "context_id": "{{event.context_id}}"
+           }
+         ]
+       },
+        {
+         "description": "Human responds to Critical Issue: Try again",
+         "conditions": {
+           "event_data": {
+             "context_id": { "starts_with": "escalated_" },
+             "response": "try again"
+           }
+         },
+         "actions": [
+             {
+              "type": "update_state",
+              "path": "status",
+              "value": "Resolving Escalation (Retry)"
+             }
+         ]
+        },
+        {
+          "description": "Human responds to Critical Issue: Ignore and Proceed",
+           "conditions": {
+             "event_data": {
+               "context_id": { "starts_with": "escalated_" },
+               "response": ["continue anyway", "ignore and proceed"]
+             }
+           },
+            "actions": [
+               {
+                 "type": "update_state",
+                 "path": "status",
+                 "value": "Resolving Escalation (Ignored)"
+               }
+            ]
+        },
+        {
+          "description": "Human responds to Critical Issue: Cancel Project",
+           "conditions": {
+             "event_data": {
+               "context_id": { "starts_with": "escalated_" },
+               "response": "cancel project"
+             }
+           },
+            "actions": [
+               {
+                 "type": "update_state",
+                 "path": "status",
+                 "value": "Project Cancelled"
+               },
+                {
+                 "type": "update_state",
+                 "path": "current_phase",
+                 "value": "Terminated"
+               },
+                {
+                 "type": "send_human_message",
+                 "message_type": "INFO",
+                 "content": "Project has been cancelled as per your request.",
+                 "context_id": "{{event.context_id}}"
+               }
+            ]
+        }
+        ,
+        {
+          "description": "Human requests a new feature after launch",
+           "conditions": {
+             "project_state": {
+               "current_phase": "Live & Evolving"
+             },
+              "event_data": {
+                "response": { "starts_with": "new feature" }
+              }
+           },
+           "actions": [
+              {
+                "type": "update_state",
+                "path": "app_idea",
+                "value": "New feature request: {{event.response | replace('new feature:', '') | strip}}"
+              },
+              {
+                "type": "update_state",
+                "path": "current_phase",
+                "value": "Idea Inception & Validation"
+              },
+               {
+                 "type": "update_state",
+                 "path": "status",
+                 "value": "Active (New Feature)"
+                },
+              {
+                "type": "delegate_task",
+                "agent": "Dream Weaver",
+                "task": "generate_concept",
+                "content": {
+                  "user_idea": "{{state.app_idea}}"
+                },
+                 "context_id": "concept_gen_new_feature_{{uuid.uuid4()}}"
+              }
+           ]
+        }
+    ]
+  }
+}
